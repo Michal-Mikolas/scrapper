@@ -129,6 +129,32 @@ class Stats():
 
 
 ###############################################################################
+# Struggles
+###############################################################################
+def struggle(func, attempts = 3, fail_func = None):
+	fails = 0
+	while fails < attempts:
+		try:
+			return func()
+		except:
+			fails += 1
+			print("\n! Something went wrong, didn't work for %d. time" % fails)
+
+	if fail_func:
+		fail_func()
+	return False
+
+def open_detail(row_data):
+	if isinstance(row_data['detail'], str):
+		get_driver().get(row_data['detail'])
+
+	if hasattr(row_data['detail'], '__call__'):
+		row_data['detail'](row_data)
+
+	wait_for_detail()
+
+
+###############################################################################
 # Scrapper
 ###############################################################################
 stats = Stats()
@@ -145,20 +171,29 @@ while True:
 	# Rows detail?
 	for row_data in data:
 		if 'detail' in row_data:
-			if isinstance(row_data['detail'], str):
-				# TODO handling detail URL
-				pass
+			struggle(
+				lambda: open_detail(row_data),
+				3,
+				lambda: print('\n! Scrapping detail of this item failed:', row_data, '\n')
+			)
 
-			if hasattr(row_data['detail'], '__call__'):
-				try:
-					row_data['detail'](row_data)
-					wait_for_detail()
+			row_data.update(get_detail_data())
 
-					row_data.update(get_detail_data())
+			struggle(
+				exit_detail,
+				3,
+				lambda: print('\n! Scrapping detail of this item failed:', row_data, '\n')
+			)
 
-					exit_detail()
-				except:
-					print('\n! Scrapping detail of this item failed:', row_data, '\n')
+			# try:
+			# 	row_data['detail'](row_data)
+			# 	wait_for_detail()
+
+			# 	row_data.update(get_detail_data())
+
+			# 	exit_detail()
+			# except:
+			# 	print('\n! Scrapping detail of this item failed:', row_data, '\n')
 
 	# Save rows data
 	save_data(data)
