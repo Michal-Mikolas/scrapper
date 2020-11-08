@@ -2,6 +2,7 @@
 from helium import *
 import time
 import math
+import csv
 
 """
 Web scrapper
@@ -16,37 +17,61 @@ Created by Michal Mikolas
 # CONFIG
 ###############################################################################
 def init():
-	start_chrome('https://aukro.cz/notebooky-netbooky?endingTime=9&endingTime_enabled=1&offerTypeAuction=2&order=d&price_enabled=1&price_to=1059&a_enum%5B9844%5D%5B20%5D=20&a_enum%5B9844%5D%5B30%5D=30&a_enum%5B9844%5D%5B40%5D=40&a_enum%5B9844%5D%5B50%5D=50')
-	wait_until(S('products-list list-view list-card').exists)
+	start_chrome('https://new-partners.mallgroup.com/login')
+
+	write('', into='Email')
+	write('', into='Heslo')
+	click(u'Přihlásit')
+
+	wait_until(S('div.v-data-table tbody tr td').exists, timeout_secs=30)
 
 def get_rows():
-	return find_all(S('products-list list-view list-card'))
+	return find_all(S('div.v-data-table tbody tr'))
 
 def get_data(row):
 	return {
-		# 'name': S('h2', below=row).web_element.text,
-		# 'price': S('.buy-price', below=row).web_element.text
-		'name': row.web_element.find_element_by_css_selector('h2').text,
-		'price': row.web_element.find_element_by_css_selector('.buy-price').text
+		'name': row.web_element.find_element_by_css_selector('td:nth-child(5)').text,
+		'price': row.web_element.find_element_by_css_selector('td:nth-child(6)').text
 	}
 
 def next_page():
-	click('chevron_right')
-	wait_until(lambda: not S('products-list.searching').exists())
+	click(S('div.v-data-footer__icons-after button'))
+	wait_until(lambda:
+		not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
+		timeout_secs=30
+	)
 
 def has_next_page():
-	a = S('a.page-number.next')
-	b = S('a.page-number.next').exists()
-	return S('a.page-number.next').exists()
+	return not S('div.v-data-footer__icons-after button[disabled]').exists()
 
 def save_data(data):
-	print('TODO')
+	with open(file='output.csv', mode='a+', encoding='utf-8', newline='') as file:
+		writer = csv.writer(file)
+		for row_data in data:
+			writer.writerow(row_data.values())
+
+
+###############################################################################
+# Log
+###############################################################################
+class Log():
+	def add_url(self, url):
+		with open('log.txt', mode='a+', encoding='utf-8') as log_file:
+			log_file.write(url + '\n')
+
+	def get_urls(self):
+		with open('log.txt', mode='r', encoding='utf-8') as log_file:
+			return log_file.readlines()
+
+	def has_url(self, url):
+		urls = self.get_urls()
+		return url in urls
 
 
 ###############################################################################
 # Statistics
 ###############################################################################
-class stats():
+class Stats():
 	start_time = time.time()
 	counter = 0
 
@@ -63,9 +88,9 @@ class stats():
 
 		print('')
 		print('############################################################')
-		print('# Running:  ' + str(hours), ':' + str(minutes), ':' + str(round(seconds)))
-		print('# Scrapped: ' + str(self.counter) + ' items')
-		print('# Speed:    ' + str(round(self.counter / running * 60)) + ' items / minute')
+		print('# Running:  %02d:%02d:%02d'    % (hours, minutes, seconds))
+		print('# Scrapped: %s items'          % format(self.counter, ',').replace(',', ' '))
+		print('# Speed:    %d items / minute' % (self.counter / running * 60))
 		print('############################################################')
 		print('')
 
@@ -73,7 +98,8 @@ class stats():
 ###############################################################################
 # Scrapper
 ###############################################################################
-stats = stats()
+stats = Stats()
+log = Log()
 init()
 while True:
 	# Get rows data
@@ -81,16 +107,17 @@ while True:
 	rows = get_rows()
 	for row in rows:
 		row_data = get_data(row)
-		# print('found ', row_data['name'])
 		data.append(row_data)
-
-	stats.add(len(rows))
-	stats.print()
 
 	# Rows detail?
 
 	# Save rows data
 	save_data(data)
+	log.add_url(get_driver().current_url)
+
+	# Statistics
+	stats.add(len(rows))
+	stats.print()
 
 	# Handle pagination
 	if not has_next_page():
