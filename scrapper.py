@@ -4,6 +4,7 @@ from selenium.webdriver.common.keys import Keys
 import time
 import math
 import csv
+import re
 
 """
 Web scrapper
@@ -17,7 +18,8 @@ Created by Michal Mikolas
 ###############################################################################
 # CONFIG
 ###############################################################################
-timeout = 60
+timeout = 30
+attempts = 3
 
 def init():
 	start_chrome('https://new-partners.mallgroup.com/login')
@@ -26,10 +28,11 @@ def init():
 	write('', into='Heslo')
 	click(u'Přihlásit')
 
-	wait_until(
-		S('div.v-data-table tbody tr td:nth-child(12)').exists,
-		timeout_secs=timeout
-	)
+def in_list():
+	return S('div.v-data-table tbody tr td:nth-child(12)').exists()
+
+def needs_reinit():
+	return TextField('Heslo').exists()
 
 def get_rows():
 	return find_all(S('div.v-data-table tbody tr'))
@@ -64,8 +67,8 @@ def has_next_page():
 
 detail_strategy = 'natural'  # natural|page|finish
 
-def wait_for_detail():
-	wait_until(S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div').exists)
+def in_detail():
+	return S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div').exists()
 
 def get_detail_data():
 	cont = S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div')
@@ -81,6 +84,26 @@ def exit_detail():
 		timeout_secs=timeout
 	)
 
+###### RESTORE PAGINATION ######
+
+def get_page_id():
+	id = S('div.v-data-footer__pagination').web_element.text
+	id = re.sub(' z .*', '', id)
+
+	return id.strip()
+
+def store_page():
+	with open('lastpage.txt', 'w') as file:
+		file.write(get_page_id())
+
+def restore_page():
+	with open('lastpage.txt', 'r') as file:
+		last_id = file.read().strip()
+
+	if last_id:
+		while get_page_id() != last_id:
+			next_page()
+
 ###### STORAGE ######
 
 def save_data(data):
@@ -88,23 +111,6 @@ def save_data(data):
 		writer = csv.writer(file)
 		for row_data in data:
 			writer.writerow(row_data.values())
-
-
-###############################################################################
-# Log
-###############################################################################
-class Log():
-	def add_url(self, url):
-		with open('log.txt', mode='a+', encoding='utf-8') as log_file:
-			log_file.write(url + '\n')
-
-	def get_urls(self):
-		with open('log.txt', mode='r', encoding='utf-8') as log_file:
-			return log_file.readlines()
-
-	def has_url(self, url):
-		urls = self.get_urls()
-		return url in urls
 
 
 ###############################################################################
@@ -144,11 +150,19 @@ def struggle(func, attempts = 3, fail_func = None):
 			return func()
 		except:
 			fails += 1
-			print("\n! Something went wrong, didn't work for %d. time" % fails)
+			print("! Something went wrong, didn't work for %d. time." % fails)
 
-	if fail_func:
-		fail_func()
-	return False
+	fail_func()
+	heal()
+
+def heal():
+	print('\n! Weird stuff happened. Re-initialising...')
+	get_driver().quit()
+	init()
+	raise Healed
+
+class Healed(Exception):
+	pass
 
 def open_detail(row_data):
 	if isinstance(row_data['detail'], str):
@@ -157,62 +171,70 @@ def open_detail(row_data):
 	if hasattr(row_data['detail'], '__call__'):
 		row_data['detail'](row_data)
 
-	wait_for_detail()
+	wait_until(in_detail, timeout_secs=timeout)
 
 
 ###############################################################################
 # Scrapper
 ###############################################################################
 stats = Stats()
-log = Log()
+
 init()
+wait_until(in_list, timeout_secs=timeout)
+struggle(restore_page, attempts, lambda: print('! Pagination restore failed.'))
+
 while True:
-	# Get rows data
-	data = []
-	rows = get_rows()
-	for row in rows:
-		row_data = get_data(row)
-		data.append(row_data)
+	try:
+		# Get rows data
+		data = []
+		rows = get_rows()
+		for row in rows:
+			row_data = get_data(row)
+			data.append(row_data)
 
-	# Rows detail?
-	for row_data in data:
-		if 'detail' in row_data:
-			struggle(
-				lambda: open_detail(row_data),
-				3,
-				lambda: print('\n! Scrapping detail of this item failed:', row_data, '\n')
-			)
+		# Rows detail?
+		for row_data in data:
+			if 'detail' in row_data:
+				struggle(
+					lambda: open_detail(row_data),
+					attempts,
+					lambda: print('! Scrapping detail of this item failed:', row_data)
+				)
 
-			row_data.update(get_detail_data())
+				row_data.update(get_detail_data())
 
-			struggle(
-				exit_detail,
-				3,
-				lambda: print('\n! Scrapping detail of this item failed:', row_data, '\n')
-			)
+				struggle(
+					exit_detail,
+					attempts,
+					lambda: print('! Scrapping detail of this item failed:', row_data)
+				)
 
-			# try:
-			# 	row_data['detail'](row_data)
-			# 	wait_for_detail()
+		# Save rows data
+		save_data(data)
+		store_page()
 
-			# 	row_data.update(get_detail_data())
+		# Statistics
+		stats.add(len(rows))
+		stats.print()
 
-			# 	exit_detail()
-			# except:
-			# 	print('\n! Scrapping detail of this item failed:', row_data, '\n')
+		# Handle pagination
+		if not has_next_page():
+			break
+		struggle(next_page, attempts, lambda: print('! Next page failed to load.'))
 
-	# Save rows data
-	save_data(data)
-	log.add_url(get_driver().current_url)
+	except Healed:
+		struggle(restore_page, attempts, lambda: print('! Pagination restore failed.'))
 
-	# Statistics
-	stats.add(len(rows))
-	stats.print()
 
-	# Handle pagination
-	if not has_next_page():
-		break
-	struggle(next_page, 3, lambda: print('\n! Next page failed to load.'))
-	# next_page()
+###############################################################################
+# Cleaner
+###############################################################################
+
+# lines_seen = set()  # holds lines already seen
+# with open("output-cleaned.csv", "w") as output_file:
+# 	for line in open("output.csv", "r"):
+# 		if line not in lines_seen:  # check if line is not duplicate
+# 			output_file.write(line)
+# 			lines_seen.add(line)
 
 input('Done.')
