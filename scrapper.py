@@ -60,6 +60,10 @@ def next_page():
 def has_next_page():
 	return not S('div.v-data-footer__icons-after button[disabled]').exists()
 
+###### DETAIL ######
+
+detail_strategy = 'natural'  # natural|page|finish
+
 def wait_for_detail():
 	wait_until(S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div').exists)
 
@@ -76,6 +80,8 @@ def exit_detail():
 		not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
 		timeout_secs=timeout
 	)
+
+###### STORAGE ######
 
 def save_data(data):
 	with open(file='output.csv', mode='a+', encoding='utf-8', newline='') as file:
@@ -206,6 +212,7 @@ while True:
 	# Handle pagination
 	if not has_next_page():
 		break
-	next_page()
+	struggle(next_page, 3, lambda: print('\n! Next page failed to load.'))
+	# next_page()
 
 input('Done.')
