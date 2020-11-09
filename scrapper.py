@@ -24,15 +24,19 @@ attempts = 3
 def init():
 	start_chrome('https://new-partners.mallgroup.com/login')
 
-	write('', into='Email')
-	write('', into='Heslo')
+	write('info@davigon.cz', into='Email')
+	write('Korona3184', into='Heslo')
 	click(u'Přihlásit')
+
+	wait_until(in_list, timeout)
+	time.sleep(1)
+	click(S('div.v-data-footer div.v-input__icon i.v-icon'))
+	time.sleep(1)
+	click('20')
+	time.sleep(3)
 
 def in_list():
 	return S('div.v-data-table tbody tr td:nth-child(12)').exists()
-
-def needs_reinit():
-	return TextField('Heslo').exists()
 
 def get_rows():
 	return find_all(S('div.v-data-table tbody tr'))
@@ -158,7 +162,10 @@ def struggle(func, attempts = 3, fail_func = None):
 def heal():
 	print('\n! Weird stuff happened. Re-initialising...')
 	get_driver().quit()
+
 	init()
+	wait_until(in_list, timeout_secs=timeout)
+
 	raise Healed
 
 class Healed(Exception):
