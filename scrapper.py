@@ -76,8 +76,9 @@ def get_page_id():
 	return id.strip()
 
 def store_page():
+	page_id = get_page_id()
 	with open('lastpage.txt', 'w') as file:
-		file.write(get_page_id())
+		file.write(page_id)
 
 def restore_page():
 	with open('lastpage.txt', 'r') as file:
@@ -269,7 +270,11 @@ while True:
 			lambda: (print('! Saving data failed'), heal_to_init())
 		)
 		save_data(data)
-		store_page()
+		struggle(
+			store_page,
+			attempts,
+			lambda: (print('! Storing page ID failed'), heal_to_init())
+		)
 
 		# Statistics
 		stats.add(len(data))
@@ -296,8 +301,8 @@ while True:
 ###############################################################################
 
 # lines_seen = set()  # holds lines already seen
-# with open("output-cleaned.csv", "w") as output_file:
-# 	for line in open("output.csv", "r"):
+# with open("output-cleaned.csv", "w", encoding='utf-8', newline='') as output_file:
+# 	for line in open("output.csv", "r", encoding='utf-8'):
 # 		if line not in lines_seen:  # check if line is not duplicate
 # 			output_file.write(line)
 # 			lines_seen.add(line)

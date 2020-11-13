@@ -5,6 +5,13 @@ import csv
 import re
 
 
+   #
+  # #   #####    ##   #####  ##### ###### #####
+ #   #  #    #  #  #  #    #   #   #      #    #
+#     # #    # #    # #    #   #   #####  #    #
+####### #    # ###### #####    #   #      #####
+#     # #    # #    # #        #   #      #   #
+#     # #####  #    # #        #   ###### #    #
 class WebAdapter():
 
 	def init(self):
@@ -48,6 +55,13 @@ class WebAdapter():
 		pass
 
 
+ #####
+#     #  ####  #####    ##   #####  #####  ###### #####
+#       #    # #    #  #  #  #    # #    # #      #    #
+ #####  #      #    # #    # #    # #    # #####  #    #
+      # #      #####  ###### #####  #####  #      #####
+#     # #    # #   #  #    # #      #      #      #   #
+ #####   ####  #    # #    # #      #      ###### #    #
 class Scrapper():
 
 	###### PUBLIC API ######
@@ -70,6 +84,24 @@ class Scrapper():
 		pass
 
 
+ #####
+#     # #####  ####  #####    ##    ####  ######
+#         #   #    # #    #  #  #  #    # #
+ #####    #   #    # #    # #    # #      #####
+      #   #   #    # #####  ###### #  ### #
+#     #   #   #    # #   #  #    # #    # #
+ #####    #    ####  #    # #    #  ####  ######
+class Storage():
+	def __init__(self):
+		pass
+
+	def save(self, data):
+		pass
+
+	def finish(self):
+		pass
+
+
 class CsvStorage():
 	def __init__(self, filename='output.csv'):
 		pass
@@ -81,6 +113,18 @@ class CsvStorage():
 		pass
 
 
+class CsvUniqueStorage(CsvStorage):
+	def finish(self):
+		pass
+
+
+ #####
+#     # #####   ##   #####  ####
+#         #    #  #    #   #
+ #####    #   #    #   #    ####
+      #   #   ######   #        #
+#     #   #   #    #   #   #    #
+ #####    #   #    #   #    ####
 class Stats():
 	start_time = time.time()
 	counter = 0
