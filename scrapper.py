@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
 from helium import *
 import time
 import math
 import csv
 import re
+
 
 """
 Web scrapper
@@ -14,297 +14,350 @@ Created by Michal Mikolas
 """
 
 
-###############################################################################
-# CONFIG
-###############################################################################
-timeout = 30
-attempts = 3
+   #
+  # #   #####    ##   #####  ##### ###### #####
+ #   #  #    #  #  #  #    #   #   #      #    #
+#     # #    # #    # #    #   #   #####  #    #
+####### #    # ###### #####    #   #      #####
+#     # #    # #    # #        #   #      #   #
+#     # #####  #    # #        #   ###### #    #
+class WebAdapter():
 
-###### WEB-SPECIFIC SETUP ######
+	def init(self):
+		pass
 
-def init():
-	start_chrome('https://new-partners.mallgroup.com/login')
-	get_driver().maximize_window()
+	def in_list(self):
+		pass
 
-	write('', into='Email')
-	write('', into='Heslo')
-	click(u'Přihlásit')
+	def get_rows(self):
+		pass
 
-def in_list():
-	return S('div.v-data-table tbody tr td:nth-child(12)').exists()
+	def get_data(self, row):
+		pass
 
-def get_rows():
-	return find_all(S('div.v-data-table tbody tr'))
+	def next_page(self):
+		pass
 
-def get_data(row):
-	return {
-		'id': row.web_element.find_element_by_css_selector('td:nth-child(3)').text,
-		'mall_id': row.web_element.find_element_by_css_selector('td:nth-child(4)').text,
-		'name': row.web_element.find_element_by_css_selector('td:nth-child(5)').text,
-		'price': row.web_element.find_element_by_css_selector('td:nth-child(6)').text
-			.replace(' ', '')
-			.replace(u'Kč', ''),
-		'payment': row.web_element.find_element_by_css_selector('td:nth-child(7)').text,
-		'delivery': row.web_element.find_element_by_css_selector('td:nth-child(8)').text,
-		'package_id': row.web_element.find_element_by_css_selector('td:nth-child(9)').text,
-		'opened_date': row.web_element.find_element_by_css_selector('td:nth-child(10)').text,
-		'delivery_date': row.web_element.find_element_by_css_selector('td:nth-child(11)').text,
-		'delivered_date': row.web_element.find_element_by_css_selector('td:nth-child(12)').text,
-		'status': row.web_element.find_element_by_css_selector('td:nth-child(13)').text,
-		'detail': lambda row_data: (
-			get_driver().execute_script("window.scrollTo(0, 0)"),  # fix for inability to click on first link?
-			click(row_data['id'])
-		),
-	}
+	def has_next_page(self):
+		pass
 
-def next_page():
-	click(S('div.v-data-footer__icons-after button'))
-	wait_until(lambda:
-		not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
-		timeout_secs=timeout
-	)
+	###### RESTORE PAGINATION ######
 
-def has_next_page():
-	return not S('div.v-data-footer__icons-after button[disabled]').exists()
+	def get_page_id(self):
+		pass
 
-###### RESTORE PAGINATION ######
+	def store_page(self):
+		pass
 
-def get_page_id():
-	id = S('div.v-data-footer__pagination').web_element.text
-	id = re.sub(' z .*', '', id)
+	def restore_page(self):
+		pass
 
-	return id.strip()
+	###### DETAIL ######
 
-def store_page():
-	page_id = get_page_id()
-	with open('lastpage.txt', 'w') as file:
-		file.write(page_id)
+	def in_detail(self):
+		pass
 
-def restore_page():
-	with open('lastpage.txt', 'r') as file:
-		last_id = file.read().strip()
+	def get_detail_data(self):
+		pass
 
-	if last_id:
-		while get_page_id() != last_id:
-			next_page()
-
-###### DETAIL ######
-
-detail_strategy = 'natural'  # TODO natural|finish
-
-def in_detail():
-	return S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div').exists()
-
-def get_detail_data():
-	cont = S('main .v-card.custom-card .row .col-sm-4:nth-child(1) div')
-	return {
-		'email': cont.web_element.find_element_by_css_selector('div:nth-child(3)').text,
-		'phone': cont.web_element.find_element_by_css_selector('div:nth-child(4)').text,
-	}
-
-def exit_detail():
-	click(u'Všechny objednávky')
-	wait_until(lambda:
-		not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
-		timeout_secs=timeout
-	)
-
-###### STORAGE ######
-
-def save_data(data):
-	with open(file='output.csv', mode='a+', encoding='utf-8', newline='') as file:
-		writer = csv.writer(file)
-		for row_data in data:
-			writer.writerow(row_data.values())
+	def exit_detail(self):
+		pass
 
 
-###############################################################################
-# Statistics
-###############################################################################
+ #####
+#     # #####  ####  #####    ##    ####  ######
+#         #   #    # #    #  #  #  #    # #
+ #####    #   #    # #    # #    # #      #####
+      #   #   #    # #####  ###### #  ### #
+#     #   #   #    # #   #  #    # #    # #
+ #####    #    ####  #    # #    #  ####  ######
+class Storage():
+	def __init__(self):
+		pass
+
+	def add_data(self, data):
+		pass
+
+	def finish(self):
+		pass
+
+
+class CsvStorage():
+
+	def __init__(self, filename='output.csv'):
+		self.filename = filename
+
+	def add_data(self, data):
+		with open(file=self.filename, mode='a+', encoding='utf-8', newline='') as file:
+			writer = csv.writer(file)
+			for row_data in data:
+				writer.writerow(row_data.values())
+
+
+class CsvUniqueStorage(CsvStorage):
+
+	def __init__(self, filename='output.csv', unique_filename='output.unique.csv'):
+		super().__init__(filename)
+		self.unique_filename = unique_filename
+
+	def finish(self):
+		lines_seen = set()  # holds lines already seen
+		with open(self.unique_filename, "w", encoding='utf-8', newline='') as output_file:
+			for line in open(self.filename, "r", encoding='utf-8'):
+				if line not in lines_seen:  # check if line is not duplicate
+					output_file.write(line)
+					lines_seen.add(line)
+
+
+ #####
+#     # #####   ##   #####  ####
+#         #    #  #    #   #
+ #####    #   #    #   #    ####
+      #   #   ######   #        #
+#     #   #   #    #   #   #    #
+ #####    #   #    #   #    ####
 class Stats():
 	start_time = time.time()
-	last_page_time = time.time()
 	counter = 0
-	last_page_counter = 0
 
-	def add(self, count):
-		self.counter += count
+	def add(self, data):
+		self.counter += len(data)
 
 	def print(self):
 		now = time.time()
 
 		running = now - self.start_time
-		# running_page = now - self.last_page_time
-
 		hours = math.floor(running / 60 / 60)
 		minutes = math.floor(running / 60) - (hours * 60)
 		seconds = running - (minutes * 60) - (hours * 60 * 60)
 
 		print('')
 		print('############################################################')
-		print('# Running:           %02d:%02d:%02d'    % (hours, minutes, seconds))
-		print('# Scrapped:          %s items'          % format(self.counter, ',').replace(',', ' '))
-		print('# Speed (total):     %d items / minute' % (self.counter / running * 60))
-		print('# Speed (last page): %d items / minute' % ((self.counter - self.last_page_counter) / (now - self.last_page_time) * 60))
+		print('# Running:  %02d:%02d:%02d' % (hours, minutes, seconds))
+		print('# Scrapped: %s items' % format(self.counter, ',').replace(',', ' '))
+		print('# Speed:    %d items / minute' % (self.counter / running * 60))
 		print('############################################################')
 		print('')
 
-		self.last_page_time = now
-		self.last_page_counter = self.counter
+
+ #####
+#     #  ####  #####    ##   #####  #####  ###### #####
+#       #    # #    #  #  #  #    # #    # #      #    #
+ #####  #      #    # #    # #    # #    # #####  #    #
+      # #      #####  ###### #####  #####  #      #####
+#     # #    # #   #  #    # #      #      #      #   #
+ #####   ####  #    # #    # #      #      ###### #    #
+class Scrapper():
+	MODE_NATURAL = 'mode_natural'
+	MODE_PAGE = 'mode_page'
+	MODE_END = 'mode_end'
 
 
-###############################################################################
-# Struggles
-###############################################################################
-def struggle(func, attempts = 3, fail_func = None, try_to_heal = True):
-	fails = 0
-	while fails < attempts:
+	###### PUBLIC API ######
+
+
+	def __init__(self, web_adapter: WebAdapter, storage: Storage, timeout=30, fail_attempts=3):
+		self.web = web_adapter
+		self.storage = storage
+		self.timeout = timeout
+		self.fail_attempts = fail_attempts
+		self.stats = Stats()
+
+
+	def run(self, mode='mode_natural'):
+		if mode == self.MODE_NATURAL:
+			return self.scrap_mode_natural()
+
+
+	def scrap_mode_natural(self):
+		self.init()
+		self.restore_page()
+
+		while True:
+			try:
+				page_scrapped = False
+				while not page_scrapped:
+					try:
+						# Get rows data
+						data = []
+						rows = self.web.get_rows()
+						for row in rows:
+							row_data = self.get_data(row)
+							data.append(row_data)
+
+						# Rows detail?
+						for row_data in data:
+							if 'detail' in row_data:
+								self.open_detail(row_data)
+								row_data.update(self.web.get_detail_data())
+								self.exit_detail(row_data)
+
+						page_scrapped = True
+
+					except HealedToLastPage:
+						pass
+
+				# Save rows data
+				self.add_data(data)
+				self.store_page()
+
+				# Statistics
+				self.stats.add(data)
+				self.stats.print()
+
+				# Handle pagination
+				if not self.web.has_next_page():
+					break
+				self.next_page()
+
+			except HealedToInit:
+				# Restore last visited page
+				self.try_forever(self.restore_page)
+
+		self.finish()
+
+
+	###### INTERNAL ######
+
+
+	def init(self):
+		self.web.init()
+		wait_until(self.web.in_list, timeout_secs=self.timeout)
+
+
+	def restore_page(self):
+		self.struggle(
+			self.web.restore_page,
+			self.fail_attempts,
+			lambda: print('! Pagination restore failed.')
+		)
+
+
+	def get_data(self, row):
+		return self.struggle(
+			lambda: self.web.get_data(row),
+			self.fail_attempts,
+			lambda: print('! Scrapping list failed.')
+		)
+
+
+	def open_detail(self, row_data):
+		self.struggle(
+            lambda: self.open_detail_unsafe(row_data),
+            self.fail_attempts,
+            lambda: print('! Opening detail of this item failed:', row_data)
+        )
+
+
+	def open_detail_unsafe(self, row_data):
+		if isinstance(row_data['detail'], str):
+			get_driver().get(row_data['detail'])
+
+		if hasattr(row_data['detail'], '__call__'):
+			row_data['detail'](row_data)
+
+		wait_until(self.web.in_detail, timeout_secs=self.timeout)
+
+
+	def exit_detail(self, row_data):
+		self.struggle(
+            self.web.exit_detail,
+            self.fail_attempts,
+            lambda: print('! Exiting detail of this item failed:', row_data)
+        )
+
+
+	def add_data(self, data):
+		self.struggle(
+            lambda: self.storage.add_data(data),
+            self.fail_attempts,
+            lambda: (print('! Adding data to storage failed'), self.heal_to_init())
+        )
+
+
+	def store_page(self):
+		self.struggle(
+            self.web.store_page,
+            self.fail_attempts,
+            lambda: (print('! Storing page ID failed'), self.heal_to_init())
+        )
+
+
+	def next_page(self):
+		self.struggle(
+			self.web.next_page,
+			self.fail_attempts,
+			lambda: print('! Next page failed to load.')
+		)
+
+
+	def finish(self):
+		self.storage.finish()
+
+
+	###### SOLUTINON FOR NON-STABLE WEB PAGES ######
+
+
+	def struggle(self, func, attempts=3, fail_func=None, try_to_heal=True):
+		fails = 0
+		while fails < attempts:  # TODO self.fail_attempts ?
+			try:
+				return func()
+			except Exception as e:
+				fails += 1
+				print("! Something went wrong, didn't work for %d. time." % fails)
+				print("- exception:", e.__class__.__name__ + ':', e)
+
+		if fail_func:
+			fail_func()
+
+		if try_to_heal:
+			self.heal()
+
+
+	def heal(self):
 		try:
-			return func()
-		except Exception as e:
-			fails += 1
-			print("! Something went wrong, didn't work for %d. time." % fails)
-			print("- exception:", e.__class__.__name__ + ':', e)
+			print('! Trying to heal to last page...')  # TODO heal max 3x for one page?
+			if not self.web.in_list():
+				self.struggle(
+					self.web.exit_detail,
+					self.fail_attempts,
+					lambda: print('! Healing to the last page failed...'),
+					try_to_heal=False
+				)
 
-	if fail_func:
-		fail_func()
+			raise HealedToLastPage
 
-	if try_to_heal:
-		heal()
+		except HealedToLastPage:
+			raise HealedToLastPage
 
-def heal():
-	try:
-		print('! Trying to heal to last page...')  # TODO heal max 3x for one page?
-		if not in_list():
-			struggle(
-				exit_detail,
-				attempts,
-				lambda: print('! Healing to the last page failed...'),
-				try_to_heal=False
-			)
-
-		raise HealedToLastPage
-
-	except HealedToLastPage:
-		raise HealedToLastPage
-
-	except:
-		heal_to_init()
-
-def heal_to_init():
-	print('\n! Weird stuff happened. Re-initialising...')
-	get_driver().quit()
-
-	struggle(init, attempts, lambda: print('! Re-initialising failed. '))
-	wait_until(in_list, timeout_secs=timeout)
-
-	raise HealedToInit
-
-class HealedToLastPage(Exception):
-	pass
-
-class HealedToInit(Exception):
-	pass
-
-def open_detail(row_data):
-	if isinstance(row_data['detail'], str):
-		get_driver().get(row_data['detail'])
-
-	if hasattr(row_data['detail'], '__call__'):
-		row_data['detail'](row_data)
-
-	wait_until(in_detail, timeout_secs=timeout)
+		except:
+			self.heal_to_init()
 
 
-###############################################################################
-# Scrapper
-###############################################################################
-stats = Stats()
+	def heal_to_init(self):
+		print('\n! Weird stuff happened. Re-initialising...')
+		get_driver().quit()
 
-init()
-wait_until(in_list, timeout_secs=timeout)
-struggle(restore_page, attempts, lambda: print('! Pagination restore failed.'))
+		self.struggle(self.web.init, self.fail_attempts, lambda: print('! Re-initialising failed. '))
+		wait_until(self.web.in_list, timeout_secs=self.timeout)
 
-while True:
-	try:
-		pages_scrapped = False
-		while not pages_scrapped:
+		raise HealedToInit
+
+
+	def try_forever(self, func):
+		success = False
+		while not success:
 			try:
-				# Get rows data
-				data = []
-				rows = get_rows()
-				for row in rows:
-					row_data = struggle(
-						lambda: get_data(row),
-						attempts,
-						lambda: print('! Scrapping list failed.')
-					)
-					data.append(row_data)
-
-				# Rows detail?
-				for row_data in data:
-					if 'detail' in row_data:
-						struggle(
-							lambda: open_detail(row_data),
-							attempts,
-							lambda: print('! Scrapping detail of this item failed:', row_data)
-						)
-
-						row_data.update(get_detail_data())
-
-						struggle(
-							exit_detail,
-							attempts,
-							lambda: print('! Scrapping detail of this item failed:', row_data)
-						)
-
-				pages_scrapped = True
-
-			except HealedToLastPage:
-				pass
-
-		# Save rows data
-		struggle(
-			lambda: save_data(data),
-			attempts,
-			lambda: (print('! Saving data failed'), heal_to_init())
-		)
-		save_data(data)
-		struggle(
-			store_page,
-			attempts,
-			lambda: (print('! Storing page ID failed'), heal_to_init())
-		)
-
-		# Statistics
-		stats.add(len(data))
-		stats.print()
-
-		# Handle pagination
-		if not has_next_page():
-			break
-		struggle(next_page, attempts, lambda: print('! Next page failed to load.'))
-
-	except HealedToInit:
-		# Restore last visited page
-		page_restored = False
-		while not page_restored:
-			try:
-				struggle(restore_page, attempts, lambda: print('! Pagination restore failed.'))
-				page_restored = True
+				func()
+				success = True
 			except:
 				pass
 
 
-###############################################################################
-# Cleaner
-###############################################################################
+class HealedToLastPage(Exception):
+	pass
 
-# lines_seen = set()  # holds lines already seen
-# with open("output-cleaned.csv", "w", encoding='utf-8', newline='') as output_file:
-# 	for line in open("output.csv", "r", encoding='utf-8'):
-# 		if line not in lines_seen:  # check if line is not duplicate
-# 			output_file.write(line)
-# 			lines_seen.add(line)
 
-input('Done.')
+class HealedToInit(Exception):
+	pass
