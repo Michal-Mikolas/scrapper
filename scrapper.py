@@ -84,6 +84,32 @@ class WebAdapter():
 			"window.scroll({top: document.body.scrollHeight, left: document.body.scrollWidth, behavior: 'smooth'})"
 		)
 
+	def scroll_all(self):
+		"""
+		Used for web pages with lazy-loading elements which renders only when visible
+		"""
+		total_height = get_driver().execute_script("return document.body.scrollHeight")
+		page_height = get_driver().execute_script("return window.innerHeight")
+
+		scroll_y = 0
+		while True:
+			get_driver().execute_script("window.scroll({top: %d, left: 0})" % scroll_y)
+			time.sleep(.3)
+
+			scroll_y += page_height
+			if (scroll_y >= total_height):
+				break
+
+	def scrool_to(self, element):
+		# TODO finish this method!!!
+
+		# element = S('#pagerbottom a.fa-chevron-right').web_element
+		coordinates = element.location_once_scrolled_into_view
+		print(coordinates)
+		get_driver().execute_script("arguments[0].scrollIntoView();", element)
+		print(element.get_attribute('href'))
+		time.sleep(3)
+
 	###### INTERNAL ######
 
 	def get_name(self):
@@ -182,9 +208,10 @@ class Scrapper():
 	###### PUBLIC API ######
 
 
-	def __init__(self, web_adapter: WebAdapter, storage: Storage, timeout=30, fail_attempts=3):
+	def __init__(self, web_adapter: WebAdapter, storage: Storage, verbosity = 1, timeout=30, fail_attempts=3):
 		self.web = web_adapter
 		self.storage = storage
+		self.verbosity = verbosity
 		self.timeout = timeout
 		self.fail_attempts = fail_attempts
 		self.stats = Stats()
@@ -197,9 +224,7 @@ class Scrapper():
 
 	def scrap_mode_natural(self):
 		self.init()
-		print('init.') ###
 		self.restore_page()
-		print('restore_page.') ###
 
 		while True:
 			try:
@@ -208,13 +233,9 @@ class Scrapper():
 					try:
 						# Get rows data
 						data = []
-						print('web.get_rows?') ###
 						rows = self.web.get_rows()
-						print('web.get_rows.') ###
 						for row in rows:
-							print('get_data(row)?') ###
 							row_data = self.get_data(row)
-							print('get_data(row).') ###
 							data.append(row_data)
 
 						# Rows detail?
@@ -235,7 +256,8 @@ class Scrapper():
 
 				# Statistics
 				self.stats.add(data)
-				self.stats.print()
+				if self.verbosity >= 1:
+					self.stats.print()
 
 				# Handle pagination
 				if not self.web.has_next_page():
@@ -253,11 +275,17 @@ class Scrapper():
 
 
 	def init(self):
+		if self.verbosity >= 2:
+			print('Scrapper: Initialising web page...')
+
 		self.web.init()
 		wait_until(self.web.in_list, timeout_secs=self.timeout)
 
 
 	def restore_page(self):
+		if self.verbosity >= 2:
+			print('Scrapper: Restoring pagination...')
+
 		self.struggle(
 			self.web.restore_page,
 			self.fail_attempts,
@@ -266,6 +294,9 @@ class Scrapper():
 
 
 	def get_data(self, row):
+		if self.verbosity >= 2:
+			print('Scrapper: Fetching items from page...')
+
 		return self.struggle(
 			lambda: self.web.get_data(row),
 			self.fail_attempts,
@@ -274,6 +305,9 @@ class Scrapper():
 
 
 	def open_detail(self, row_data):
+		if self.verbosity >= 2:
+			print('Scrapper: Opening item detail...')
+
 		self.struggle(
             lambda: self.open_detail_unsafe(row_data),
             self.fail_attempts,
@@ -292,6 +326,9 @@ class Scrapper():
 
 
 	def exit_detail(self, row_data):
+		if self.verbosity >= 2:
+			print('Scrapper: Exiting item detail...')
+
 		self.struggle(
             self.web.exit_detail,
             self.fail_attempts,
@@ -300,6 +337,9 @@ class Scrapper():
 
 
 	def add_data(self, data):
+		if self.verbosity >= 2:
+			print('Scrapper: Adding data from current page to storage...')
+
 		self.struggle(
             lambda: self.storage.add_data(data),
             self.fail_attempts,
@@ -308,6 +348,9 @@ class Scrapper():
 
 
 	def store_page(self):
+		if self.verbosity >= 2:
+			print('Scrapper: Storing current pagination position...')
+
 		self.struggle(
             self.web.store_page,
             self.fail_attempts,
@@ -316,6 +359,9 @@ class Scrapper():
 
 
 	def next_page(self):
+		if self.verbosity >= 2:
+			print('Scrapper: Going to next page...')
+
 		self.struggle(
 			self.web.next_page,
 			self.fail_attempts,
@@ -324,6 +370,9 @@ class Scrapper():
 
 
 	def finish(self):
+		if self.verbosity >= 2:
+			print('Scrapper: Finishing...')
+
 		self.storage.finish()
 
 

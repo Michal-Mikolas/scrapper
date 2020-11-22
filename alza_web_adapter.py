@@ -1,5 +1,6 @@
 import scrapper
 from helium import *
+import time
 
 
 class AlzaWebAdapter(scrapper.WebAdapter):
@@ -8,23 +9,31 @@ class AlzaWebAdapter(scrapper.WebAdapter):
 		self.start_url = start_url
 
 	def init(self):
-		start_chrome(self.start_url)
+		start_firefox(self.start_url)
 		get_driver().maximize_window()
+		self.scroll_all()  # fix for not loading items?
 
 	def in_list(self):
-		return S('div.mainContent div.browsingitemcontainer div.browsingitem a.name').exists()
+		print('Alza/in_list()?') ###
+		if S('div.mainContent div.browsingitemcontainer div.browsingitem .c2').exists(): ###
+			print('- yes') ###
+		else: ###
+			print('- no') ###
+		return S('div.mainContent div.browsingitemcontainer div.browsingitem .c2').exists()
 
 	def get_rows(self):
-		self.scroll_bottom()
-		return find_all(S('div.mainContent div.browsingitemcontainer div.browsingitem'))
+		#print('Alza/get_rows()?') ###
+		return find_all(S('#boxes > div.browsingitem'))
+		#print('-', len(results)) ###
+		# return find_all(S('div.mainContent div.browsingitemcontainer div.browsingitem'))
 
 	def get_data(self, row):
 		el = row.web_element
 		return {
-			'code': el.find_element_by_css_selector('.codec .code').text,
+			'code': el.find_element_by_css_selector('.codec .code').get_attribute('textContent'),
 			'name': el.find_element_by_css_selector('a.name').text,
 			'short_desc': el.find_element_by_css_selector('.Description').text.strip(),
-			'rating': el.find_element_by_css_selector('.star-rating-wrapper').get_attribute('title'),
+			# 'rating': el.find_element_by_css_selector('.star-rating-wrapper').get_attribute('title'),
 			'price': el.find_element_by_css_selector('.c2').text
 				.strip(',-')
 				.replace(' ', ''),
@@ -38,11 +47,13 @@ class AlzaWebAdapter(scrapper.WebAdapter):
 		}
 
 	def next_page(self):
-		click(S('#pagerbottom a.fa-chevron-right'))
+		next_page_url = S('#pagerbottom a.fa-chevron-right').web_element.get_attribute('href')
+		get_driver().get(next_page_url)
 		wait_until(self.in_list, timeout_secs=30)
 
 	def has_next_page(self):
-		return not S('#pagerbottom a.fa-chevron-right').exists()
+		# self.scroll_all()
+		return S('#pagerbottom a.fa-chevron-right').exists()
 
 	###### RESTORE PAGINATION ######
 
