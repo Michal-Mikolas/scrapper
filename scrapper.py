@@ -72,6 +72,18 @@ class WebAdapter():
 	def exit_detail(self):
 		pass
 
+	###### HELPERS ######
+
+	def scroll_top(self):
+		get_driver().execute_script(
+			"window.scroll({top: 0, left: 0, behavior: 'smooth'})"
+		)
+
+	def scroll_bottom(self):
+		get_driver().execute_script(
+			"window.scroll({top: document.body.scrollHeight, left: document.body.scrollWidth, behavior: 'smooth'})"
+		)
+
 	###### INTERNAL ######
 
 	def get_name(self):
@@ -185,7 +197,9 @@ class Scrapper():
 
 	def scrap_mode_natural(self):
 		self.init()
+		print('init.') ###
 		self.restore_page()
+		print('restore_page.') ###
 
 		while True:
 			try:
@@ -194,9 +208,13 @@ class Scrapper():
 					try:
 						# Get rows data
 						data = []
+						print('web.get_rows?') ###
 						rows = self.web.get_rows()
+						print('web.get_rows.') ###
 						for row in rows:
+							print('get_data(row)?') ###
 							row_data = self.get_data(row)
+							print('get_data(row).') ###
 							data.append(row_data)
 
 						# Rows detail?

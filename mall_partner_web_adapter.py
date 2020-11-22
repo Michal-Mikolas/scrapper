@@ -43,7 +43,7 @@ class MallPartnerWebAdapter(scrapper.WebAdapter):
 				.replace('\n', ' '),
 			'detail': lambda row_data: (
 				# fix for inability to click on first link?
-				get_driver().execute_script("window.scrollTo(0, 0)"),
+				self.scroll_top(),
 				click(row_data['id'])
 			),
 		}
