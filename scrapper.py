@@ -44,13 +44,22 @@ class WebAdapter():
 	###### RESTORE PAGINATION ######
 
 	def get_page_id(self):
-		pass
+		return get_driver().current_url
 
 	def store_page(self):
-		pass
+		page_id = self.get_page_id()
+		with open(self.get_name() + '.lastpage', 'w') as file:
+			file.write(page_id)
 
 	def restore_page(self):
-		pass
+		with open(self.get_name() + '.lastpage', 'a+') as file:
+			# a+ creates file if not exist and move the cursor to the file end
+			file.seek(0)
+			last_id = file.read().strip()
+
+		if last_id:
+			while self.get_page_id() != last_id:
+				self.next_page()
 
 	###### DETAIL ######
 
@@ -62,6 +71,11 @@ class WebAdapter():
 
 	def exit_detail(self):
 		pass
+
+	###### INTERNAL ######
+
+	def get_name(self):
+		return self.__class__.__name__.replace('WebAdapter', '')
 
 
  #####

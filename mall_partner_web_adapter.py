@@ -6,6 +6,8 @@ import re
 class MallPartnerWebAdapter(scrapper.WebAdapter):
 
 	def __init__(self, email, password):
+		super().__init__()
+
 		self.email = email
 		self.password = password
 
@@ -65,20 +67,6 @@ class MallPartnerWebAdapter(scrapper.WebAdapter):
 
 		return id.strip()
 
-	def store_page(self):
-		page_id = self.get_page_id()
-		with open('lastpage.txt', 'w') as file:
-			file.write(page_id)
-
-	def restore_page(self):
-		with open('lastpage.txt', 'a+') as file:
-			file.seek(0)  # a+ creates file if not exist and move the cursor to the file end
-			last_id = file.read().strip()
-
-		if last_id:
-			while self.get_page_id() != last_id:
-				self.next_page()
-
 	###### DETAIL ######
 
 	def in_detail(self):
@@ -93,8 +81,8 @@ class MallPartnerWebAdapter(scrapper.WebAdapter):
 
 	def exit_detail(self):
 		click(u'Všechny objednávky')
-		wait_until(lambda:
-                    not S(
-                    	'div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
-                    timeout_secs=30
-             )
+		wait_until(
+			lambda:
+				not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
+			timeout_secs=30
+		)

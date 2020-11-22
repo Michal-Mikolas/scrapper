@@ -1,6 +1,6 @@
 __pycache__
 debug.log
 log.txt
-lastpage.txt
+*.lastpage
 *.csv
 run.py
