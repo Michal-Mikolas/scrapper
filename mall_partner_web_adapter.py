@@ -36,11 +36,11 @@ class MallPartnerWebAdapter(scrapper.WebAdapter):
 			'payment': row.web_element.find_element_by_css_selector('td:nth-child(7)').text,
 			'delivery': row.web_element.find_element_by_css_selector('td:nth-child(8)').text,
 			'package_id': row.web_element.find_element_by_css_selector('td:nth-child(9)').text,
-			'opened_date': row.web_element.find_element_by_css_selector('td:nth-child(10)').text
-				.replace('\n', ' '),
+			'opened_date': row.web_element.find_element_by_css_selector('td:nth-child(10)').text,
 			'delivery_date': row.web_element.find_element_by_css_selector('td:nth-child(11)').text,
 			'delivered_date': row.web_element.find_element_by_css_selector('td:nth-child(12)').text,
-			'status': row.web_element.find_element_by_css_selector('td:nth-child(13)').text,
+			'status': row.web_element.find_element_by_css_selector('td:nth-child(13)').text
+				.replace('\n', ' '),
 			'detail': lambda row_data: (
 				# fix for inability to click on first link?
 				get_driver().execute_script("window.scrollTo(0, 0)"),
