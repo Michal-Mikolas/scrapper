@@ -3,3 +3,4 @@ debug.log
 log.txt
 lastpage.txt
 *.csv
+run.py

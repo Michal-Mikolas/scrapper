@@ -4,12 +4,17 @@ import re
 
 
 class MallPartnerWebAdapter(scrapper.WebAdapter):
+
+	def __init__(self, email, password):
+		self.email = email
+		self.password = password
+
 	def init(self):
 		start_chrome('https://new-partners.mallgroup.com/login')
 		get_driver().maximize_window()
 
-		write('', into='Email')
-		write('', into='Heslo')
+		write(self.email, into='Email')
+		write(self.password, into='Heslo')
 		click(u'Přihlásit')
 
 	def in_list(self):
