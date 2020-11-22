@@ -35,13 +35,13 @@ class WebAdapter():
 	def get_data(self, row):
 		pass
 
+	###### PAGINATION ######
+
 	def next_page(self):
 		pass
 
 	def has_next_page(self):
 		pass
-
-	###### RESTORE PAGINATION ######
 
 	def get_page_id(self):
 		return get_driver().current_url
@@ -100,7 +100,7 @@ class WebAdapter():
 			if (scroll_y >= total_height):
 				break
 
-	def scrool_to(self, element):
+	def scrool_to(self, element, offset_top=0):
 		# TODO finish this method!!!
 
 		# element = S('#pagerbottom a.fa-chevron-right').web_element
@@ -208,7 +208,7 @@ class Scrapper():
 	###### PUBLIC API ######
 
 
-	def __init__(self, web_adapter: WebAdapter, storage: Storage, verbosity = 1, timeout=30, fail_attempts=3):
+	def __init__(self, web_adapter: WebAdapter, storage: Storage, verbosity=2, timeout=30, fail_attempts=3):
 		self.web = web_adapter
 		self.storage = storage
 		self.verbosity = verbosity

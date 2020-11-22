@@ -48,18 +48,17 @@ class MallPartnerWebAdapter(scrapper.WebAdapter):
 			),
 		}
 
+	###### PAGINATION ######
+
 	def next_page(self):
 		click(S('div.v-data-footer__icons-after button'))
-		wait_until(lambda:
-                    not S(
-                    	'div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
-                    timeout_secs=30
-             )
+		wait_until(
+			lambda: not S('div.v-select__selection.v-select__selection--comma.v-select__selection--disabled').exists(),
+			timeout_secs=30
+		)
 
 	def has_next_page(self):
 		return not S('div.v-data-footer__icons-after button[disabled]').exists()
-
-	###### RESTORE PAGINATION ######
 
 	def get_page_id(self):
 		id = S('div.v-data-footer__pagination').web_element.text
