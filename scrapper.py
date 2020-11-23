@@ -100,15 +100,27 @@ class WebAdapter():
 			if (scroll_y >= total_height):
 				break
 
-	def scrool_to(self, element, offset_top=0):
-		# TODO finish this method!!!
+	def scroll_to(self, element, offset_top=0):
+		if isinstance(element, S):
+			element = element.web_element
 
-		# element = S('#pagerbottom a.fa-chevron-right').web_element
-		coordinates = element.location_once_scrolled_into_view
-		print(coordinates)
 		get_driver().execute_script("arguments[0].scrollIntoView();", element)
-		print(element.get_attribute('href'))
-		time.sleep(3)
+
+		if offset_top:
+			scroll_y = get_driver().execute_script("return window.scrollY")
+			scroll_x = get_driver().execute_script("return window.scrollX")
+			get_driver().execute_script("window.scroll({top: %d, left: %d})" % (
+				scroll_y - offset_top,
+				scroll_x
+			))
+
+		# # TODO finish this method!!!
+		# # element = S('#pagerbottom a.fa-chevron-right').web_element
+		# coordinates = element.location_once_scrolled_into_view
+		# print(coordinates)
+		# get_driver().execute_script("arguments[0].scrollIntoView();", element)
+		# print(element.get_attribute('href'))
+		# time.sleep(3)
 
 	###### INTERNAL ######
 
@@ -275,7 +287,7 @@ class Scrapper():
 
 
 	def init(self):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Initialising web page...')
 
 		self.web.init()
@@ -283,7 +295,7 @@ class Scrapper():
 
 
 	def restore_page(self):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Restoring pagination...')
 
 		self.struggle(
@@ -294,18 +306,25 @@ class Scrapper():
 
 
 	def get_data(self, row):
-		if self.verbosity >= 2:
-			print('Scrapper: Fetching items from page...')
+		if self.verbosity >= 3:
+			print('Scrapper: Fetching data from item in list...')
 
-		return self.struggle(
+		data = self.struggle(
 			lambda: self.web.get_data(row),
 			self.fail_attempts,
-			lambda: print('! Scrapping list failed.')
+			lambda: print('! Scrapping item failed.')
 		)
+
+		if self.verbosity == 2:
+			print('- scrapped item:', list(data.values())[0])
+		if self.verbosity >=4:
+			print('- item data:', data)
+
+		return data
 
 
 	def open_detail(self, row_data):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Opening item detail...')
 
 		self.struggle(
@@ -326,7 +345,7 @@ class Scrapper():
 
 
 	def exit_detail(self, row_data):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Exiting item detail...')
 
 		self.struggle(
@@ -337,7 +356,7 @@ class Scrapper():
 
 
 	def add_data(self, data):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Adding data from current page to storage...')
 
 		self.struggle(
@@ -348,7 +367,7 @@ class Scrapper():
 
 
 	def store_page(self):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Storing current pagination position...')
 
 		self.struggle(
@@ -359,7 +378,7 @@ class Scrapper():
 
 
 	def next_page(self):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Going to next page...')
 
 		self.struggle(
@@ -370,7 +389,7 @@ class Scrapper():
 
 
 	def finish(self):
-		if self.verbosity >= 2:
+		if self.verbosity >= 3:
 			print('Scrapper: Finishing...')
 
 		self.storage.finish()
